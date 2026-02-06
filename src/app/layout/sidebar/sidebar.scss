@@ -1,0 +1,19 @@
+.side{
+  width: 220px;
+  background: #111827;
+  color: white;
+  padding: 16px;
+  height: 100vh;
+}
+
+.title{ margin: 0 0 16px; }
+
+a{
+  display:block;
+  color:white;
+  text-decoration:none;
+  padding:10px 8px;
+  border-radius:8px;
+}
+
+a.active{ background: rgba(255,255,255,.12); }
