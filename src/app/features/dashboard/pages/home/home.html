@@ -1,1 +1,337 @@
-<p>home works!</p>
+<div class="dashboard-container">
+  <!-- Header -->
+  <header class="dashboard-header">
+    <div class="header-left">
+      <h1 class="dashboard-title">🛍️ SmartShop</h1>
+      <p class="dashboard-subtitle">Panel de Control - Punto de Venta</p>
+    </div>
+    <div class="header-right">
+      <div class="date-time">
+        <span class="date">📅 {{ currentDate | date: 'EEEE, d MMMM yyyy' }}</span>
+        <span class="time">⏰ {{ currentTime }}</span>
+      </div>
+      <div class="status" [class.online]="isOnline">
+        <span class="status-dot"></span>
+        <span>{{ isOnline ? 'En línea' : 'Sin conexión' }}</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Navigation Tabs -->
+  <nav class="tab-navigation">
+    <button
+      *ngFor="let tab of tabs"
+      [class.active]="activeTab === tab.id"
+      (click)="selectTab(tab.id)"
+      class="tab-button"
+    >
+      <span class="tab-icon">{{ tab.icon }}</span>
+      <span class="tab-label">{{ tab.label }}</span>
+    </button>
+  </nav>
+
+  <!-- Content Area -->
+  <main class="tab-content">
+    <!-- Sales Tab -->
+    <section *ngIf="activeTab === 'sales'" class="tab-section">
+      <div class="section-header">
+        <h2>💰 Ventas del Día</h2>
+        <button class="btn btn-primary" (click)="refreshSales()">🔄 Actualizar</button>
+      </div>
+
+      <!-- Summary Cards -->
+      <div class="summary-cards">
+        <div class="card">
+          <div class="card-icon">💵</div>
+          <div class="card-content">
+            <p class="card-label">Ventas Totales</p>
+            <p class="card-value">HNL {{ totalSales | number: '1.2-2' }}</p>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-icon">↩️</div>
+          <div class="card-content">
+            <p class="card-label">Devoluciones</p>
+            <p class="card-value">{{ refundCount }} (HNL {{ totalRefunds | number: '1.2-2' }})</p>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-icon">✅</div>
+          <div class="card-content">
+            <p class="card-label">Ventas Netas</p>
+            <p class="card-value">HNL {{ netSales | number: '1.2-2' }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sales Table -->
+      <div class="sales-table-container">
+        <table class="sales-table">
+          <thead>
+            <tr>
+              <th>Hora</th>
+              <th>Productos</th>
+              <th>Monto</th>
+              <th>Método</th>
+              <th>Tipo</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let sale of salesList" [class.refund]="sale.type === 'refund'">
+              <td>{{ sale.time }}</td>
+              <td>{{ sale.items.join(', ') }}</td>
+              <td [class.negative]="sale.amount < 0">HNL {{ sale.amount | number: '1.2-2' }}</td>
+              <td>{{ sale.method }}</td>
+              <td>
+                <span [class.badge]="true" [class.sale]="sale.type === 'sale'" [class.refund]="sale.type === 'refund'">
+                  {{ sale.type === 'sale' ? '✅ Venta' : '↩️ Devolución' }}
+                </span>
+              </td>
+              <td class="actions">
+                <button class="btn-icon" (click)="editSale(sale)" title="Editar">✏️</button>
+                <button class="btn-icon delete" (click)="deleteSale(sale.id)" title="Eliminar">🗑️</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Corrections Tab -->
+    <section *ngIf="activeTab === 'corrections'" class="tab-section">
+      <div class="section-header">
+        <h2>🔧 Correcciones</h2>
+        <button class="btn btn-primary" (click)="openCorrectionForm()" *ngIf="!showCorrectionForm">
+          ➕ Nueva Corrección
+        </button>
+      </div>
+
+      <!-- New Correction Form -->
+      <div *ngIf="showCorrectionForm" class="form-container">
+        <h3>Registrar Nueva Corrección</h3>
+        <div class="form-group">
+          <label>Nombre del Producto</label>
+          <input type="text" [(ngModel)]="newCorrection.itemName" placeholder="Ej: Monitor LG 27&quot;" />
+        </div>
+        <div class="form-group">
+          <label>Problema Reportado</label>
+          <textarea [(ngModel)]="newCorrection.issue" placeholder="Describe el problema..."></textarea>
+        </div>
+        <div class="form-group">
+          <label>Solución Aplicada</label>
+          <textarea [(ngModel)]="newCorrection.solution" placeholder="Describe la solución..."></textarea>
+        </div>
+        <div class="form-actions">
+          <button class="btn btn-primary" (click)="saveCorrection()">✅ Guardar</button>
+          <button class="btn btn-secondary" (click)="showCorrectionForm = false">❌ Cancelar</button>
+        </div>
+      </div>
+
+      <!-- Corrections List -->
+      <div class="corrections-list">
+        <div *ngFor="let correction of corrections" class="correction-card" [class.resolved]="correction.status === 'resolved'">
+          <div class="correction-header">
+            <h4>{{ correction.itemName }}</h4>
+            <span class="badge" [class.pending]="correction.status === 'pending'" [class.resolved]="correction.status === 'resolved'">
+              {{ correction.status === 'pending' ? '⏳ Pendiente' : '✅ Resuelto' }}
+            </span>
+          </div>
+          <p><strong>Problema:</strong> {{ correction.issue }}</p>
+          <p><strong>Solución:</strong> {{ correction.solution }}</p>
+          <p class="correction-time">🕐 {{ correction.timestamp }}</p>
+          <button
+            *ngIf="correction.status === 'pending'"
+            class="btn btn-small"
+            (click)="resolveCorrection(correction.id)"
+          >
+            ✅ Marcar como Resuelto
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Calculator Tab -->
+    <section *ngIf="activeTab === 'calculator'" class="tab-section calculator-section">
+      <h2>🧮 Calculador de Pagos</h2>
+
+      <div class="calculator-grid">
+        <!-- Cart Column -->
+        <div class="cart-column">
+          <h3>🛒 Carrito de Compras</h3>
+
+          <!-- Add Item Form -->
+          <div class="form-container">
+            <h4>Agregar Producto</h4>
+            <div class="form-group">
+              <input type="text" [(ngModel)]="newItem.name" placeholder="Nombre del producto" />
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Precio (HNL)</label>
+                <input type="number" [(ngModel)]="newItem.price" placeholder="0.00" min="0" />
+              </div>
+              <div class="form-group">
+                <label>Cantidad</label>
+                <input type="number" [(ngModel)]="newItem.quantity" placeholder="1" min="1" />
+              </div>
+            </div>
+            <button class="btn btn-primary" (click)="addToCart()">➕ Agregar</button>
+          </div>
+
+          <!-- Cart Items -->
+          <div class="cart-items">
+            <h4>Productos en Carrito</h4>
+            <table *ngIf="cartItems.length > 0" class="cart-table">
+              <thead>
+                <tr>
+                  <th>Producto</th>
+                  <th>Precio</th>
+                  <th>Qty</th>
+                  <th>Subtotal</th>
+                  <th>Acción</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let item of cartItems; let i = index">
+                  <td>{{ item.name }}</td>
+                  <td>HNL {{ item.price | number: '1.2-2' }}</td>
+                  <td>{{ item.quantity }}</td>
+                  <td>HNL {{ item.price * item.quantity | number: '1.2-2' }}</td>
+                  <td>
+                    <button class="btn-icon delete" (click)="removeCartItem(i)">🗑️</button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <div *ngIf="cartItems.length === 0" class="empty-state">
+              <p>El carrito está vacío</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Calculation Column -->
+        <div class="calculation-column">
+          <h3>💳 Resumen de Pago</h3>
+
+          <div class="calculation-box">
+            <div class="calc-row">
+              <span>Subtotal:</span>
+              <span>HNL {{ getSubtotal() | number: '1.2-2' }}</span>
+            </div>
+            <div class="calc-row">
+              <span>Impuesto (2%):</span>
+              <span>HNL {{ getTax() | number: '1.2-2' }}</span>
+            </div>
+
+            <div class="calc-row discount">
+              <span>Descuento (%):</span>
+              <input type="number" [(ngModel)]="discount" min="0" max="100" placeholder="0" />
+            </div>
+            <div class="calc-row" *ngIf="discount > 0">
+              <span>Descuento (HNL):</span>
+              <span>-HNL {{ getDiscount() | number: '1.2-2' }}</span>
+            </div>
+
+            <div class="calc-row total">
+              <strong>TOTAL A PAGAR:</strong>
+              <strong>HNL {{ getTotal() | number: '1.2-2' }}</strong>
+            </div>
+          </div>
+
+          <!-- Payment Method -->
+          <div class="payment-method">
+            <h4>Método de Pago</h4>
+            <div class="method-buttons">
+              <button
+                *ngFor="let method of paymentMethods"
+                [class.selected]="selectedPaymentMethod === method.id"
+                (click)="selectedPaymentMethod = method.id"
+                class="method-btn"
+              >
+                <span class="method-icon">{{ method.icon }}</span>
+                <span>{{ method.name }}</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Amount Received (only for cash) -->
+          <div *ngIf="selectedPaymentMethod === 'cash'" class="cash-payment">
+            <div class="form-group">
+              <label>Monto Recibido (HNL)</label>
+              <input type="number" [(ngModel)]="amountReceived" placeholder="0.00" min="0" />
+            </div>
+            <div class="change-box" *ngIf="amountReceived > 0">
+              <p>Cambio:</p>
+              <p [class.negative]="getChange() < 0" class="change-amount">
+                HNL {{ getChange() | number: '1.2-2' }}
+              </p>
+            </div>
+          </div>
+
+          <!-- Process Payment Button -->
+          <button
+            [disabled]="cartItems.length === 0"
+            class="btn btn-success btn-large"
+            (click)="processPayment()"
+          >
+            ✅ PROCESAR PAGO
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Reports Tab -->
+    <section *ngIf="activeTab === 'reports'" class="tab-section">
+      <h2>📈 Reportes</h2>
+
+      <!-- Summary Cards -->
+      <div class="summary-cards">
+        <div class="card">
+          <div class="card-icon">📊</div>
+          <div class="card-content">
+            <p class="card-label">Transacciones</p>
+            <p class="card-value">{{ salesList.length }}</p>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-icon">📈</div>
+          <div class="card-content">
+            <p class="card-label">Promedio por Transacción</p>
+            <p class="card-value">HNL {{ getAverageTransaction() | number: '1.2-2' }}</p>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-icon">💰</div>
+          <div class="card-content">
+            <p class="card-label">Total de Ventas</p>
+            <p class="card-value">HNL {{ totalSales | number: '1.2-2' }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Payment Method Breakdown -->
+      <div class="report-section">
+        <h3>Desglose por Método de Pago</h3>
+        <table class="report-table" *ngIf="getPaymentMethodBreakdown().length > 0">
+          <thead>
+            <tr>
+              <th>Método</th>
+              <th>Transacciones</th>
+              <th>Total</th>
+              <th>Porcentaje</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let method of getPaymentMethodBreakdown()">
+              <td>{{ method.name }}</td>
+              <td>{{ method.count }}</td>
+              <td>HNL {{ method.total | number: '1.2-2' }}</td>
+              <td>{{ (method.total / totalSales * 100) | number: '1.0-0' }}%</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+</div>
