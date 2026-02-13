@@ -1,4 +1,121 @@
-<h2>Login</h2>
-<p>Bienvenido a Tienda POS</p>
+<div class="login-container">
+  <!-- Lado izquierdo: Branding -->
+  <div class="login-branding">
+    <div class="branding-content">
+      <div class="logo">
+        <div class="logo-icon">🛍️</div>
+      </div>
+      <h1>Tienda POS</h1>
+      <p class="tagline">Gestión de Ventas Inteligente</p>
+      <div class="features">
+        <div class="feature">
+          <span class="feature-icon">✓</span>
+          <span>Ventas en tiempo real</span>
+        </div>
+        <div class="feature">
+          <span class="feature-icon">✓</span>
+          <span>Gestión de inventario</span>
+        </div>
+        <div class="feature">
+          <span class="feature-icon">✓</span>
+          <span>Reportes detallados</span>
+        </div>
+      </div>
+    </div>
+  </div>
 
-<a routerLink="/app/dashboard">Entrar</a>
+  <!-- Lado derecho: Formulario -->
+  <div class="login-form-wrapper">
+    <div class="login-form-container">
+      <h2 class="form-title">Bienvenido</h2>
+      <p class="form-subtitle">Ingresa a tu cuenta para continuar</p>
+
+      <form [formGroup]="loginForm" (ngSubmit)="onLogin()" class="login-form">
+        <!-- Email -->
+        <div class="form-group">
+          <label for="email" class="form-label">Correo Electrónico</label>
+          <div class="input-wrapper">
+            <span class="input-icon">📧</span>
+            <input
+              id="email"
+              type="email"
+              formControlName="email"
+              class="form-input"
+              placeholder="tu@correo.com"
+              required
+            />
+          </div>
+          <div class="error-message" *ngIf="isFieldInvalid('email')">
+            Por favor ingresa un correo válido
+          </div>
+        </div>
+
+        <!-- Contraseña -->
+        <div class="form-group">
+          <label for="password" class="form-label">Contraseña</label>
+          <div class="input-wrapper">
+            <span class="input-icon">🔒</span>
+            <input
+              id="password"
+              [type]="showPassword ? 'text' : 'password'"
+              formControlName="password"
+              class="form-input"
+              placeholder="Ingresa tu contraseña"
+              required
+            />
+            <button
+              type="button"
+              class="toggle-password"
+              (click)="togglePasswordVisibility()"
+              tabindex="-1"
+            >
+              {{ showPassword ? '👁️' : '👁️‍🗨️' }}
+            </button>
+          </div>
+          <div class="error-message" *ngIf="isFieldInvalid('password')">
+            La contraseña es requerida
+          </div>
+        </div>
+
+        <!-- Recuérdame -->
+        <div class="form-options">
+          <label class="remember-me">
+            <input type="checkbox" formControlName="rememberMe" />
+            <span>Recuérdame</span>
+          </label>
+          <a href="#" class="forgot-password">¿Olvidaste tu contraseña?</a>
+        </div>
+
+        <!-- Botón de envío -->
+        <button
+          type="submit"
+          class="btn-submit"
+          [disabled]="!loginForm.valid"
+        >
+          <span class="btn-text">Inicia Sesión</span>
+          <span class="btn-icon">→</span>
+        </button>
+      </form>
+
+      <!-- Divider -->
+      <div class="divider">
+        <span>o continúa con</span>
+      </div>
+
+      <!-- Social Login -->
+      <div class="social-login">
+        <button type="button" class="social-btn google">
+          <span>Google</span>
+        </button>
+        <button type="button" class="social-btn microsoft">
+          <span>Microsoft</span>
+        </button>
+      </div>
+
+      <!-- Footer -->
+      <p class="form-footer">
+        ¿No tienes cuenta? <a href="#">Registrate aquí</a>
+      </p>
+    </div>
+  </div>
+</div>
